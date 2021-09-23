@@ -6,34 +6,34 @@ using System.Text;
 
 namespace DotNetWeb.Core.Statements
 {
-    public class ForEachStatement : Statement, ISemanticValidation
+    public class ForEachStatement : Statement
     {
-        public ForEachStatement(TypedExpression expression, Statement statement)
+        public ForEachStatement(Token tokx, Token toky, Statement statement)
         {
-            Expression = expression;
+            TokX = tokx;
+            TokY = toky;
             Statement = statement;
         }
 
-        public TypedExpression Expression { get; }
-        public Statement Statement { get; }
         public override void Interpret()
         {
-            if (Expression.Evaluate())
-            {
-                Statement.Interpret();
-            }
+            Statement?.Interpret();
         }
 
         public override void ValidateSemantic()
         {
-
+            Statement?.ValidateSemantic();
         }
 
         public override string Generate(int tabs)
         {
-            var code = GetCodeInit(tabs);
-            code += $"foreach({Expression?.Evaluate()}){'\n'}{{{Statement.Generate(tabs)}}}";
+            var code = Statement.Generate(tabs);
+            code += Statement.Generate(tabs + 1);
             return code;
         }
+
+        public Token TokX { get; }
+        public Token TokY { get; }
+        public Statement Statement { get; }
     }
 }

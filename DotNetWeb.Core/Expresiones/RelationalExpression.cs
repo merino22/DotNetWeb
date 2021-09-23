@@ -35,12 +35,20 @@ namespace DotNetWeb.Core.Expresiones
 
         public override Type GetExpressionType()
         {
-            return Type.Bool;
+            if (_typeRules.TryGetValue((LeftExpression.GetExpressionType(), RightExpression.GetExpressionType()), out var res))
+            {
+                return res;
+            }
+            throw new ApplicationException($"No relational operation on {LeftExpression.GetExpressionType()}, {RightExpression.GetExpressionType()} made.");
         }
 
         public override string Generate()
         {
+            if (Token.TokenType == TokenType.Equal)
+                return $"{LeftExpression.Generate()} == {RightExpression.Generate()}";
+
             return $"{LeftExpression.Generate()} {Token.Lexeme} {RightExpression.Generate()}";
         }
+        //Relational
     }
 }

@@ -21,7 +21,7 @@ namespace DotNetWeb.Core.Statements
         public override string Generate(int tabs)
         {
             var code = GetCodeInit(tabs);
-            code += $"var {Id.Generate()} = {Expression.Generate()}{'\n'}";
+            code += $"<h1>{Id.Generate()} = {Expression.Generate()}</h1>{'\n'}";
             return code;
         }
 
@@ -37,5 +37,6 @@ namespace DotNetWeb.Core.Statements
                 throw new ApplicationException($"Type {Id.GetExpressionType()} is not assignable to {Expression.GetExpressionType()}");
             }
         }
+        //statements
     }
 }

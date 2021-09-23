@@ -18,7 +18,10 @@ namespace DotNetWeb.Core.Statements
         public override string Generate(int tabs)
         {
             var code = GetCodeInit(tabs);
-            code += $"if({Expression.Generate()}){{{'\n'}";
+            if (Expression.Evaluate())
+            {
+                code += $"{Statement.Generate(tabs)}{' '}";  
+            }
             return code;
         }
         public override void Interpret()
@@ -31,7 +34,10 @@ namespace DotNetWeb.Core.Statements
 
         public override void ValidateSemantic()
         {
-            Statement.ValidateSemantic();
+            if(Expression.GetExpressionType() != Type.Bool)
+            {
+                throw new ApplicationException("Invalid if statement.");
+            }
         }
     }
 }

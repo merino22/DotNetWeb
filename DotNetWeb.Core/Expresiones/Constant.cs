@@ -18,6 +18,9 @@ namespace DotNetWeb.Core.Expresiones
                 TokenType.IntConstant => Convert.ToInt32(Token.Lexeme),
                 TokenType.FloatConstant => float.Parse(Token.Lexeme),
                 TokenType.StringConstant => Token.Lexeme,
+                TokenType.IntListKeyword => Convert.ToInt32(Token.Lexeme),
+                TokenType.FloatListKeyword => float.Parse(Token.Lexeme),
+                TokenType.StringListKeyword => Token.Lexeme,
                 _ => throw new NotImplementedException()
             };
         }
@@ -29,7 +32,8 @@ namespace DotNetWeb.Core.Expresiones
 
         public override string Generate()
         {
-            return Evaluate().ToString();
+            return Token.Lexeme;
         }
+        //constant
     }
 }

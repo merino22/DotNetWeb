@@ -8,7 +8,7 @@ namespace DotNetWeb.Core
 {
     public static class EnvironmentManager
     {
-        private static List<Environment> _contexts = new List<Environment>();
+        public static List<Environment> _contexts = new List<Environment>();
         private static List<Environment> _interpretContexts = new List<Environment>();
         private static int _currentIndex = -1;
 
@@ -71,6 +71,7 @@ namespace DotNetWeb.Core
                 }
             }
         }
+        //Environment
     }
 
 }

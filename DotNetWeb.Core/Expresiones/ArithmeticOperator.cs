@@ -47,7 +47,12 @@ namespace DotNetWeb.Core.Expresiones
 
         public override string Generate()
         {
+            if(LeftExpression.GetExpressionType() == Type.String && RightExpression.GetExpressionType() != Type.String)
+            {
+                return $"{LeftExpression.Generate()} {Token.Lexeme} {RightExpression.Generate()}";
+            }
             return $"{LeftExpression.Generate()} {Token.Lexeme} {RightExpression.Generate()}";
+            //generate
         }
     }
 }

@@ -3,6 +3,8 @@ using DotNetWeb.Core.Expresiones;
 using DotNetWeb.Core.Interfaces;
 using DotNetWeb.Core.Statements;
 using System;
+using System.IO;
+using System.Text;
 using Type = DotNetWeb.Core.Type;
 
 namespace DotNetWeb.Parser
@@ -18,6 +20,7 @@ namespace DotNetWeb.Parser
         }
         public Statement Parse()
         {
+            
             EnvironmentManager.PushContext();
             var prog = Program();
             prog.ValidateSemantic();
@@ -25,24 +28,48 @@ namespace DotNetWeb.Parser
             var code = "<!DOCTYPE html>\n";
             code += "<html lang=\"en\">\n";
             code += "<head>\n";
+            code += "<meta charset=\"UTF-8\">\n";
+            code += "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n";
+            code += "<meta name=\"viewport\" content=\"width=device-wdith, initial-scale=1.0\">\n";
+            code += "<title>Document</title>\n";
+            code += "</head>\n";
+            code += "<body>\n";
             code += prog.Generate(1);
+            code += "</body>\n";
+            code += "</html>\n";
             System.Console.WriteLine(code);
+            string filename = @"C:\Users\Aaron\Desktop\htmlTest.html";
+            try
+            {
+                if(File.Exists(filename))
+                {
+                    File.Delete(filename);
+                }
+
+                using(FileStream fs = File.Create(filename))
+                {
+                    Byte[] codex = new UTF8Encoding(true).GetBytes(code);
+                    fs.Write(codex, 0, codex.Length);
+                }
+            }
+            catch
+            {
+                throw new ApplicationException("Error Creating HTML file");
+            }
             return prog;
         }
 
         private Statement Program()
         {
-            
-            var init = Init();
-            Template();
-            return init;
+            return new SequenceStatement(Init(), Template());
         }
 
         private Statement Template()
         {
-            Tag();
-            var statement = InnerTemplate();
-            return statement;
+            var state1 = Tag();
+            var state2 = InnerTemplate();
+            var stateFinal = new SequenceStatement(state1, state2);
+            return stateFinal;
         }
         
         private Statement InnerTemplate()
@@ -85,6 +112,7 @@ namespace DotNetWeb.Parser
                 case TokenType.OpenBrace:
                     Match(TokenType.OpenBrace);
                     expression = Eq();
+                    //var x = EnvironmentManager._contexts.Contains(value);
                     Match(TokenType.CloseBrace);
                     Match(TokenType.CloseBrace);
                     return new InterpolationStatement(null, expression as TypedExpression);
@@ -92,8 +120,7 @@ namespace DotNetWeb.Parser
                     var statement = IfStmt();
                     return statement;
                 case TokenType.Hyphen:
-                    statement = ForeachStatement();
-                    return statement;
+                    return ForeachStatement();
                 default:
                     throw new ApplicationException("Unrecognized statement");
             }
@@ -104,16 +131,16 @@ namespace DotNetWeb.Parser
             Match(TokenType.Hyphen);
             Match(TokenType.Percentage);
             Match(TokenType.ForEeachKeyword);
-            var token = lookAhead;
+            var TokenX = lookAhead;
             Match(TokenType.Identifier);
-            var id = new Id(token, Type.Int);
-            EnvironmentManager.AddVariable(token.Lexeme, id);
+            var id = new Id(TokenX, Type.FloatList);
+            EnvironmentManager.AddVariable(TokenX.Lexeme, id);
             Match(TokenType.InKeyword);
-            token = lookAhead;
+            var TokenY = lookAhead;
             Match(TokenType.Identifier);
-            if (EnvironmentManager.GetSymbolForEvaluation(token.Lexeme) == null)
+            if (EnvironmentManager.GetSymbolForEvaluation(TokenY.Lexeme) == null)
             {
-                throw new ApplicationException($"Variable {token.Lexeme} no existe en el contexto actual.");
+                throw new ApplicationException($"Variable {TokenY.Lexeme} no existe en el contexto actual.");
             }
             Match(TokenType.Percentage);
             Match(TokenType.CloseBrace);
@@ -123,7 +150,8 @@ namespace DotNetWeb.Parser
             Match(TokenType.EndForEachKeyword);
             Match(TokenType.Percentage);
             Match(TokenType.CloseBrace);
-            return statement;
+            //foreach
+            return new ForEachStatement(TokenX, TokenY, statement);
         }
 
         private Statement IfStmt()
@@ -227,9 +255,9 @@ namespace DotNetWeb.Parser
                     return constant;
                 case TokenType.OpenBracket:
                     Match(TokenType.OpenBracket);
-                    ExprList();
+                    var exprlist = ExprList();
                     Match(TokenType.CloseBracket);
-                    return null;
+                    return exprlist;
                 default:
                     var symbol = EnvironmentManager.GetSymbol(this.lookAhead.Lexeme);
                     Match(TokenType.Identifier);
@@ -237,16 +265,17 @@ namespace DotNetWeb.Parser
             }
         }
 
-        private void ExprList()
+        private Expression ExprList()
         {
-            Eq();
+            var expression = Eq();
             if (this.lookAhead.TokenType != TokenType.Comma)
             {
-                return;
+                return expression;
             }
             Match(TokenType.Comma);
-            ExprList();
+            return new DualExpression(expression, ExprList());
         }
+
 
         private Statement Init()
         {
