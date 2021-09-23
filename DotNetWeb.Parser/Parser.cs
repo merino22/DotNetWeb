@@ -138,10 +138,10 @@ namespace DotNetWeb.Parser
             Match(TokenType.InKeyword);
             var TokenY = lookAhead;
             Match(TokenType.Identifier);
-            if (EnvironmentManager.GetSymbolForEvaluation(TokenY.Lexeme) == null)
+            /*if (EnvironmentManager.GetSymbolForEvaluation(TokenY.Lexeme) == null)
             {
                 throw new ApplicationException($"Variable {TokenY.Lexeme} no existe en el contexto actual.");
-            }
+            }*/
             Match(TokenType.Percentage);
             Match(TokenType.CloseBrace);
             var statement = Template();
@@ -152,6 +152,11 @@ namespace DotNetWeb.Parser
             Match(TokenType.CloseBrace);
             //foreach
             return new ForEachStatement(TokenX, TokenY, statement);
+        }
+
+        public Statement ForEachParse(DualExpression expression)
+        {
+            return new SequenceStatement(new AssignationStatement(new Id(expression.Expr1.Token, expression.Expr1.Type),expression.Expr1 as TypedExpression),expression.Expr2 is DualExpression dualExpression? ForEachParse(dualExpression): new AssignationStatement(new Id(expression.Expr2.Token, expression.Expr2.Type),expression.Expr2 as TypedExpression));
         }
 
         private Statement IfStmt()
@@ -311,7 +316,14 @@ namespace DotNetWeb.Parser
             Match(TokenType.Assignation);
             var expression = Eq();
             Match(TokenType.SemiColon);
-            return new AssignationStatement(id, expression as TypedExpression);
+            if(expression is DualExpression dualExpression)
+            {
+                return ForEachParse(dualExpression);
+            }
+            else
+            {
+                return new AssignationStatement(id, expression as TypedExpression);
+            }
         }
 
         private void Decls()
