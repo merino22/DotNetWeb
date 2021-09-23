@@ -27,6 +27,7 @@ namespace DotNetWeb.Core
         Assignation,
         StringConstant,
         EOF,
+        BasicType,
         FloatKeyword,
         StringKeyword,
         IntListKeyword,

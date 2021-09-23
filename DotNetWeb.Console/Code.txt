@@ -9,7 +9,6 @@
     x = 'test';
     arr = ['one', 'two', 'three'];
 %}
-
 <div>
     {{a}}
 </div>
