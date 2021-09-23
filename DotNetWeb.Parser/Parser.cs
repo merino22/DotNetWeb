@@ -18,12 +18,21 @@ namespace DotNetWeb.Parser
         }
         public Statement Parse()
         {
-            return Program();
+            EnvironmentManager.PushContext();
+            var prog = Program();
+            prog.ValidateSemantic();
+            prog.Interpret();
+            var code = "<!DOCTYPE html>\n";
+            code += "<html lang=\"en\">\n";
+            code += "<head>\n";
+            code += prog.Generate(1);
+            System.Console.WriteLine(code);
+            return prog;
         }
 
         private Statement Program()
         {
-            EnvironmentManager.PushContext();
+            
             var init = Init();
             Template();
             return init;
@@ -62,8 +71,6 @@ namespace DotNetWeb.Parser
         {
             if (this.lookAhead.TokenType == TokenType.OpenBrace)
             {
-                Stmt();
-                Stmts();
                 return new SequenceStatement(Stmt(), Stmts());
             }
             return null; 
@@ -76,12 +83,11 @@ namespace DotNetWeb.Parser
             switch (this.lookAhead.TokenType)
             {
                 case TokenType.OpenBrace:
-                    var symbol = EnvironmentManager.GetSymbol(this.lookAhead.Lexeme);
                     Match(TokenType.OpenBrace);
                     expression = Eq();
                     Match(TokenType.CloseBrace);
                     Match(TokenType.CloseBrace);
-                    return new InterpolationStatement(symbol.Id, expression as TypedExpression);
+                    return new InterpolationStatement(null, expression as TypedExpression);
                 case TokenType.Percentage:
                     var statement = IfStmt();
                     return statement;
@@ -98,9 +104,17 @@ namespace DotNetWeb.Parser
             Match(TokenType.Hyphen);
             Match(TokenType.Percentage);
             Match(TokenType.ForEeachKeyword);
+            var token = lookAhead;
             Match(TokenType.Identifier);
+            var id = new Id(token, Type.Int);
+            EnvironmentManager.AddVariable(token.Lexeme, id);
             Match(TokenType.InKeyword);
+            token = lookAhead;
             Match(TokenType.Identifier);
+            if (EnvironmentManager.GetSymbolForEvaluation(token.Lexeme) == null)
+            {
+                throw new ApplicationException($"Variable {token.Lexeme} no existe en el contexto actual.");
+            }
             Match(TokenType.Percentage);
             Match(TokenType.CloseBrace);
             var statement = Template();
